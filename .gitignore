@@ -7,3 +7,5 @@
 *.txt
 *.out
 *.fasta
+.RData
+.RHistory

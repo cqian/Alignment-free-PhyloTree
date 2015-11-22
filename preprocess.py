@@ -11,17 +11,20 @@ def fasta2LDA(K, input, output):
 	vocabs = [];
 	scount = 0;
 	for seq_record in seqObj:
-		doc.write("<DOC>\n<DOCNO>")
+		doc.write("<DOC>\n<DOCNO> ")
 		doc.write(seq_record.id)
-		doc.write("<\DOCNO>\n<TEXT>")
+		doc.write(" </DOCNO>\n<TEXT>\n")
 		N = len(seq_record.seq)-K+1
 		kmerList = [];
 		for x in range(N):
 			kmer = str(seq_record.seq[x:x+K])
 			kmerList.append(kmer)
 			doc.write(kmer+" ")
-			vocabDict[kmer]=1
-		doc.write("\n<\TEST>\n<\DOC>\n")
+			if kmer in vocabDict:
+				vocabDict[kmer] += 1
+			else:
+				vocabDict[kmer] = 1
+		doc.write("\n</TEXT>\n</DOC>\n")
 		vocabs = list(set(vocabs+kmerList))
 		scount += 1;
 	doc.close()
@@ -30,6 +33,11 @@ def fasta2LDA(K, input, output):
 	vocabOutput.write('\n'.join(v for v in vocabs))
 	vocabOutput.write('\n')
 	vocabOutput.close()
+
+	vocabCount = open(output+'VocabCount.txt', 'w')
+	vocabCount.write('\n'.join("{}: {}".format(v, val) for (v, val) in vocabDict.items()) )
+	vocabCount.write('\n')
+	vocabCount.close()
 
 def main():
 	K = int(sys.argv[1])

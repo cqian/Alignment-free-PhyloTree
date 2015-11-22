@@ -7,3 +7,19 @@ print(linn)
 # 	print(linn[i])
 # }
 close(conn)
+
+
+
+rm(list=ls())
+setwd("~/Cloud/Dropbox/Fall2015/GM-STATG6509/Proj/src")
+
+docFile = "../Tools/ap/ap.txt";
+vocabFile = "../Tools/ap/vocab.txt";
+
+vocabs = read.vocab(vocabFile);
+conn <- file(docFile,open="r")
+doclines <-readLines(conn)
+close(conn)
+
+documents = lexicalize(doclines, sep = " ", lower = FALSE, 
+                       count = 1L, vocab = vocabs);
