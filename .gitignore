@@ -8,6 +8,6 @@
 .out
 .fasta
 .RData
-.rda
-.RHistory
-.pdf
+*.rda
+*.RHistory
+*.pdf
