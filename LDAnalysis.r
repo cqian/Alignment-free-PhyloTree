@@ -21,7 +21,7 @@ conn <- file(docFile,open="r")
 doclines <-readLines(conn)
 close(conn)
 
-documents = lexicalize(doclines, sep = " ", lower = FALSE, 
+docs = lexicalize(doclines, sep = " ", lower = FALSE, 
 			count = 1L, vocab = vocabs);
 
 # lda call
@@ -29,9 +29,9 @@ theme_set(theme_bw())
 set.seed(8675309)
 
 ## Number of Topics
-K = 78;
+K = 20;
 result <- lda.collapsed.gibbs.sampler(
-			documents, K, vocabs, 50, 0.005, 0.005,
+      docs, K, vocabs, 50, 0.1, 1,
 			compute.log.likelihood=TRUE);
 
 ## Get the top words in the cluster
@@ -40,8 +40,8 @@ top.topics <- top.topic.documents(result$document_sums, num.documents = 20, alph
 
 
 ## Statistical output
-word.counts(documents,vocab=vocabs);
-document.lengths(documents);
+wc <- word.counts(docs,vocab=vocabs);
+dl <- document.lengths(docs);
 
 
 ## Draw plot
