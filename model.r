@@ -5,15 +5,17 @@ setwd(getwd())
 rstan_options(auto_write = TRUE)
 options(mc.cores = parallel::detectCores())
 
-data <- read_rdump('output/seq.r')
-fit <- stan(file="model.stan", data = data, iter = 50, chains = 1)
+data <- read_rdump('output/data.r')
+fit <- stan(file="model.stan", data = data, iter = 100, chains = 1)
 
-# fit0 = stan(fit=fit0, data = data, iter = 50, chains = 1, algorithm = "NUTS")
+# fit0 = stan(fit=fit, data = data, iter = 100, chains = 1, algorithm = "NUTS")
 # fit1 <- stan(fit=fit, data = CTMdata, iter = 1000, chains = 4)
 
-# extract result
-theta <- extract(fit, 'theta', permuted = TRUE)
+## extract result
+# theta <- extract(fit, 'theta', permuted = TRUE)
 post_mean_theta <- get_posterior_mean(fit,'theta')
+write(post_mean_theta, file='output/topic_proportion.txt', 
+      ncolumns=data$K, append=FALSE, sep="\t")
 
 # get the log-posterior for all chains
 log_post_model <- get_logposterior(fit)

@@ -4,19 +4,20 @@ from Bio import SeqIO
 
 def fasta2LDA(input, output):
 	seqObj = list(SeqIO.parse(input, 'fasta'))
-	doc = open('output/'+output+'.txt','w')
-	vocabOutput = open('output/'+output+'Vocab.txt', 'w')
+	doc = open(output+'.txt','w')
+	vocabOutput = open(output+'Vocab.txt', 'w')
 	vocabDict = {}
 	vocabs = [];
 	scount = 0;
+	L = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
 	for seq_record in seqObj:
 		# doc.write("<DOC>\n<DOCNO> ")
 		# doc.write(seq_record.id)
 		# doc.write(" </DOCNO>\n<TEXT>\n")
-		N = len(seq_record.seq)-K+1
+		N = len(seq_record.seq)-L+1
 		kmerList = [];
 		for x in range(N):
-			kmer = str(seq_record.seq[x:x+K])
+			kmer = str(seq_record.seq[x:x+L])
 			kmerList.append(kmer)
 			doc.write(kmer+" ")
 			if kmer in vocabDict:
@@ -41,15 +42,13 @@ def fasta2LDA(input, output):
 
 
 def fasta2Stan(input, output):
-	handle = open(input, 'r')
-	seqObj = list(SeqIO.parse(handle, 'fasta'))
+	seqObj = list(SeqIO.parse(input, 'fasta'))
 	vocabDict = {} 
 	names = {}
 
-	# compute K by log(max(seq))
-	K = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
-	N = sum(len(doc.seq)-K+1 for doc in seqObj)
-	print K, N
+	# compute lenght of l-mer by log(max(seq))
+	L = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
+	N = sum(len(doc.seq)-L+1 for doc in seqObj)
 
 	# build vocabulary, documents, words and names
 	words = [0]*N # word n 
@@ -59,13 +58,13 @@ def fasta2Stan(input, output):
 
 	# for each sequence (document)
 	for doc in seqObj:
-		seqLen = len(doc.seq)-K+1
+		seqLen = len(doc.seq)-L+1
 		names[doc.name] = n_index
 		
 		# for each word (kmer)	
 		for w in range(seqLen):
 			docID[w_index] = n_index
-			kmer = str(doc.seq[w:w+K])
+			kmer = str(doc.seq[w:w+L])
 			if kmer not in vocabDict:
 				vocabDict[kmer] = v_index
 				words[w_index] = v_index
@@ -80,13 +79,14 @@ def fasta2Stan(input, output):
 	# print len(seqObj), n_index
 	# print N, w_index
 	# vocabDict = sorted(vocabDict.items(), key=lambda item: item[1])
-	# print K, N, w_index, n_index, v_index
+	# print L, N, w_index, n_index, v_index
 	# print vocabDict;
 	# print names
 	# print words
 	# print docID
 
 	# initialized hyperparameters
+	K = 10 # number of topics
 	V = len(vocabDict)
 	alpha = np.random.dirichlet([1]*K).tolist();
 	beta = np.random.dirichlet([1]*V).tolist();
@@ -96,7 +96,7 @@ def fasta2Stan(input, output):
 	docID = str(docID).replace('[','c(').replace(']',')')
 
 	# output R format data
-	data = open('output/'+output+'.r', 'w')
+	data = open(output+'.r', 'w')
 	data.write("K <- " + str(K) + \
 		"\nV <- " + str(V) +\
 		"\nM <- " + str(n_index-1) + \
@@ -105,6 +105,7 @@ def fasta2Stan(input, output):
 	data.write("beta <- " + beta + "\n\n")
 	data.write("w <- " + words + "\n\n")
 	data.write("doc <- " + docID + "\n\n")
+	data.close()
 
 
 def main():
