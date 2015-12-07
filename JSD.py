@@ -11,8 +11,10 @@ def JSD(col, P, Q):
 		# if both P[i] and Q[i] are zero
 		if (not P[i]) and (not Q[i]):
 			continue
+		# if P[i] is zero
 		if (not P[i]):
 			QM -= Q[i]
+		# if Q[i] is zero
 		elif (not Q[i]):
 			QM -= P[i]
 		else:
@@ -40,17 +42,23 @@ def distance(input, output):
 			dMatrix[i][j] = dMatrix[j][i] = dis
 
 	# write to file
-	out = open(output+'.txt','w')
+	fname = open(output[0:output.rfind('/')+1]+'names.txt', 'r')
+	names = fname.readlines()
+	out = open(output,'w')
+	out.write(str(len(names))+"\n")
 	for i in range(rowsize):
+		# phylip format 
+		line = ''.join(names[i][0:-1]+' '*40)
 		for j in range(rowsize):
-			out.write(str(dMatrix[i][j])+"\t")
-		out.write("\n")
+			line = ''.join(line+str('%.3e' % dMatrix[i][j])+" ")
+		out.write(line+'\n')
 	out.close()
 
 
 def main():
 	input = sys.argv[1]
 	output = sys.argv[2]
+
  	distance(input, output)
 
 

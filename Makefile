@@ -1,22 +1,35 @@
-.PHONY: clean
+K = 10
+ETA = 0.1
+ALPHA = $$((50 / $(K) ))
+MAXITER = 10
+
+METHOD = Stan#{Stan, LDAr}
+MODEL = LDA #{LDA, CTM, fbCTM}
 
 # DATA = ~/Desktop/Data/SquamateMTCDs/seq.fasta
 DATA = ~/Desktop/Data/sample.fasta
-OUTPUT = output/data
+PREFIX = output/
+OUTPUT = $(PREFIX)$(METHOD)Data
+TOPIC = $(PREFIX)$(METHOD)Topic_proportion
+MATRIX = $(PREFIX)$(METHOD)JSDMatrix
 
-TOPIC = output/topic_proportion.txt
-MATRIX = output/JSDMatrix.txt
-
-fasta2LDA:
-	python preprocess.py $(DATA) $(OUTPUT) $(KMER)
-
-fasta2Stan:
-	python preprocess.py $(DATA) $(OUTPUT)
 
 jsd:
 	python JSD.py $(TOPIC) $(MATRIX)
+	./ffptree -p $(MATRIX) > $(PREFIX)$(METHOD)NeighborTree
+	./ffptree -n $(MATRIX) > $(PREFIX)$(METHOD)UPGMATree
+
+Stan:
+	python preprocess.py $(K) Stan $(MODEL) $(DATA) $(OUTPUT) $(ALPHA) $(ETA)
+	Rscript Stan.r $(MODEL) $(OUTPUT) $(TOPIC) $(MAXITER) 1
+	make jsd
+
+LDAr:
+	python preprocess.py $(K) LDAr LDA $(DATA) $(OUTPUT) $(ALPHA) $(ETA)
+	Rscript LDAr.r $(OUTPUT) $(TOPIC) $(K) $(ALPHA) $(ETA) $(MAXITER)
+	make jsd
 
 
-
+.PHONY: clean
 clean:
 	rm *.*~ *~

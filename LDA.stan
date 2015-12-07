@@ -1,3 +1,7 @@
+## Latent Dirichlet Allocation Model in Stan
+# most of the code are from Stan Manual
+# http://mc-stan.org/documentation/ 
+
 data {
 	int<lower=2> K;
 	int<lower=2> V;

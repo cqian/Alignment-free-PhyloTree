@@ -1,54 +1,68 @@
+##################
+#	Project for STAT/CS 6509 Foundations of Graphical Models
+#	LDA-based Alignment-free clustering
+#	Author: Chenzhe Qian
+# 	Date: Dec 2015
+##################
+
 import sys
 import numpy as np
 from Bio import SeqIO
-
+ 
+## Function that reads sequence file 
+#	and convert to LDA-c format
 def fasta2LDA(input, output):
 	seqObj = list(SeqIO.parse(input, 'fasta'))
-	doc = open(output+'.txt','w')
+	document = open(output,'w')
 	vocabOutput = open(output+'Vocab.txt', 'w')
 	vocabDict = {}
-	vocabs = [];
-	scount = 0;
-	L = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
+	vocabs = []
+	names = {}
+	K = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
+	newDoc = ''
+	n_index = 1
 	for seq_record in seqObj:
-		# doc.write("<DOC>\n<DOCNO> ")
-		# doc.write(seq_record.id)
-		# doc.write(" </DOCNO>\n<TEXT>\n")
-		N = len(seq_record.seq)-L+1
+		N = len(seq_record.seq)-K+1
 		kmerList = [];
+		names[seq_record.name] = n_index
 		for x in range(N):
-			kmer = str(seq_record.seq[x:x+L])
+			kmer = str(seq_record.seq[x:x+K])
 			kmerList.append(kmer)
-			doc.write(kmer+" ")
+			newDoc = ''.join(newDoc+kmer+' ')
 			if kmer in vocabDict:
 				vocabDict[kmer] += 1
 			else:
 				vocabDict[kmer] = 1
-		# doc.write("\n</TEXT>\n</DOC>\n")
-		doc.write("\n")
-		vocabs = list(set(vocabs+kmerList))
-		scount += 1;
-	doc.close()
 
-	print "The number of Species is " + str(scount) 
+		newDoc = ''.join(newDoc+'\n')
+		vocabs = list(set(vocabs+kmerList))
+		n_index += 1
+
+	document.write(newDoc)
+	document.close()
+
 	vocabOutput.write('\n'.join(v for v in vocabs))
 	vocabOutput.write('\n')
 	vocabOutput.close()
 
-	vocabCount = open(output+'VocabCount.txt', 'w')
-	vocabCount.write('\n'.join("{}: {}".format(v, val) for (v, val) in vocabDict.items()) )
-	vocabCount.write('\n')
-	vocabCount.close()
+	# vocabCount = open(output+'VocabCount.txt', 'w')
+	# vocabCount.write('\n'.join("{}: {}".format(v, val) for (v, val) in vocabDict.items()) )
+	# vocabCount.write('\n')
+	# vocabCount.close()
+	
+	return names
 
 
+## Function that reads sequence file 
+#	and convert to Rstan format
 def fasta2Stan(input, output):
 	seqObj = list(SeqIO.parse(input, 'fasta'))
 	vocabDict = {} 
 	names = {}
 
-	# compute lenght of l-mer by log(max(seq))
-	L = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
-	N = sum(len(doc.seq)-L+1 for doc in seqObj)
+	# compute lenght of k-mer by log(max(seq))
+	K = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
+	N = sum(len(doc.seq)-K+1 for doc in seqObj)
 
 	# build vocabulary, documents, words and names
 	words = [0]*N # word n 
@@ -58,13 +72,13 @@ def fasta2Stan(input, output):
 
 	# for each sequence (document)
 	for doc in seqObj:
-		seqLen = len(doc.seq)-L+1
+		seqLen = len(doc.seq)-K+1
 		names[doc.name] = n_index
 		
 		# for each word (kmer)	
 		for w in range(seqLen):
 			docID[w_index] = n_index
-			kmer = str(doc.seq[w:w+L])
+			kmer = str(doc.seq[w:w+K])
 			if kmer not in vocabDict:
 				vocabDict[kmer] = v_index
 				words[w_index] = v_index
@@ -85,38 +99,90 @@ def fasta2Stan(input, output):
 	# print words
 	# print docID
 
-	# initialized hyperparameters
-	K = 10 # number of topics
+	# Output RStan data
 	V = len(vocabDict)
-	alpha = np.random.dirichlet([1]*K).tolist();
-	beta = np.random.dirichlet([1]*V).tolist();
-	alpha = str(alpha).replace('[','c(').replace(']',')')
-	beta = str(beta).replace('[','c(').replace(']',')')
 	words = str(words).replace('[','c(').replace(']',')')
 	docID = str(docID).replace('[','c(').replace(']',')')
-
-	# output R format data
-	data = open(output+'.r', 'w')
-	data.write("K <- " + str(K) + \
-		"\nV <- " + str(V) +\
+	rstan = open(output, 'w')
+	rstan.write("V <- " + str(V) +\
 		"\nM <- " + str(n_index-1) + \
 		"\nN <- " + str(N) + "\n\n")
-	data.write("alpha <- " + alpha + "\n\n")
-	data.write("beta <- " + beta + "\n\n")
-	data.write("w <- " + words + "\n\n")
-	data.write("doc <- " + docID + "\n\n")
-	data.close()
+	rstan.write("w <- " + words + "\n\n")
+	rstan.write("doc <- " + docID + "\n\n")
+	rstan.close()
+
+	return V, names
+
+
+## Function print organisms names
+def printNames(output, names):
+	# Output names
+	fnames = open(output[0:output.rfind('/')+1]+'names.txt', 'w')
+	for n in names:
+		fnames.write(n+'\n');
+	fnames.close()
+
+
+## Function that builds parameteres 
+#	for Stan Model
+def RStanModelParam(K, V, model, output, Alpha, Eta):
+	K = int(K)
+	rstan = open(output, 'a')
+
+	beta = np.random.dirichlet([Eta]*V).tolist();
+	beta = str(beta).replace('[','c(').replace(']',')')
+		
+	rstan.write("K <- " + str(K)+"\n")
+	rstan.write("beta <- " + beta + "\n")
+	
+	if model == 'LDA':
+		alpha = np.random.dirichlet([Alpha]*K).tolist();
+		alpha = str(alpha).replace('[','c(').replace(']',')')
+		rstan.write("alpha <- " + alpha + "\n\n")
+
+	if model == 'CTM':
+		mu = np.random.uniform(0.0, 1.0, K).tolist()
+		mu = str(mu).replace('[','c(').replace(']',')')
+		
+		# generate covariance matrix as fixed hyperparameter 
+		sigma = []
+		for i in range(K):
+			sigma += np.fabs(np.random.normal(0, 1, K)).tolist()
+		
+		# symmetrize sigma matrix
+		for i in range(K):
+			for j in range(i+1,K):
+				sigma[j*K+i] = sigma[i*K+j];
+		sigma = str(sigma).replace('[','c(').replace(']',')')
+		rstan.write("mu <- " + mu + "\n")
+		rstan.write("Sigma <- matrix(" + sigma + ", nrow=" + str(K) + 
+						", ncol=" + str(K) + ")\n\n")
+
+	rstan.close()
 
 
 def main():
-	input = sys.argv[1]
-	output = sys.argv[2]
+	# K is the number of topics input by user
+	K = sys.argv[1]
 
- 	# fasta2LDA(input, output)
- 	fasta2Stan(input, output)
+	# Stan or LDAr
+	method = sys.argv[2]
+	model = sys.argv[3]
+	input = sys.argv[4]
+	output = sys.argv[5]
+	Alpha = float(sys.argv[6])
+	Eta = float(sys.argv[7])
+
+	names = []
+	if method == 'LDAr':
+		names = fasta2LDA(input, output)
+	else:
+		V, names = fasta2Stan(input, output)
+		RStanModelParam(K, V, model, output, Alpha, Eta)
+
+	printNames(output, names)
 
 
 if __name__ == '__main__':
 	main()
-
 
