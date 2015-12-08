@@ -41,17 +41,26 @@ def distance(input, output):
 				map(float, data[j].split('\t')))
 			dMatrix[i][j] = dMatrix[j][i] = dis
 
+	# test
+	for i in range(rowsize):
+		for j in range(i,rowsize):
+			if not( dMatrix[i][j] == dMatrix[i][j]):
+				print "not equal"
+
 	# write to file
-	fname = open(output[0:output.rfind('/')+1]+'names.txt', 'r')
+	fname = open(output[0:output.rfind('/')+1]+'names', 'r')
 	names = fname.readlines()
-	out = open(output,'w')
-	out.write(str(len(names))+"\n")
+	maxLen = (int)(max(len(n) for n in names))
+	matrix = str(len(names))+"\n"
 	for i in range(rowsize):
 		# phylip format 
-		line = ''.join(names[i][0:-1]+' '*40)
+		matrix += names[i][0:-1]+' '*(maxLen-len(names[i])+40)
 		for j in range(rowsize):
-			line = ''.join(line+str('%.3e' % dMatrix[i][j])+" ")
-		out.write(line+'\n')
+			matrix += str('%.3e' % dMatrix[i][j])+" "
+		matrix += '\n'
+	
+	out = open(output,'w')
+	out.write(matrix)
 	out.close()
 
 

@@ -1,13 +1,13 @@
 K = 10
 ETA = 0.1
 ALPHA = $$((50 / $(K) ))
-MAXITER = 10
+MAXITER = 1000
 
-METHOD = Stan#{Stan, LDAr}
+METHOD = LDAr#{Stan, LDAr}
 MODEL = LDA #{LDA, CTM, fbCTM}
 
-# DATA = ~/Desktop/Data/SquamateMTCDs/seq.fasta
-DATA = ~/Desktop/Data/sample.fasta
+DATA = ~/Desktop/Data/SquamateMTCDs/seq.fasta
+# DATA = ~/Desktop/Data/sample.fasta
 PREFIX = output/
 OUTPUT = $(PREFIX)$(METHOD)Data
 TOPIC = $(PREFIX)$(METHOD)Topic_proportion
@@ -33,3 +33,5 @@ LDAr:
 .PHONY: clean
 clean:
 	rm *.*~ *~
+
+# python preprocess.py 10 LDAr LDA ~/Desktop/Data/SquamateMTCDs/seq.fasta output/LDArTest 0.1 1

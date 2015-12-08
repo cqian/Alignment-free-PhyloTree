@@ -13,7 +13,7 @@ args <- commandArgs(TRUE);
 
 ## Data
 docFile <- args[1];
-vocabFile <- paste(docFile, '', sep='Vocab.txt')
+vocabFile <- paste(docFile, '', sep='Vocab')
 # docFile <- 'output/data';
 # vocabFile <- 'output/dataVocab.txt'
 

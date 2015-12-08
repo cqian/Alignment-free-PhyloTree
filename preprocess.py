@@ -8,47 +8,50 @@
 import sys
 import numpy as np
 from Bio import SeqIO
- 
+
+
 ## Function that reads sequence file 
 #	and convert to LDA-c format
 def fasta2LDA(input, output):
 	seqObj = list(SeqIO.parse(input, 'fasta'))
-	document = open(output,'w')
-	vocabOutput = open(output+'Vocab.txt', 'w')
 	vocabDict = {}
-	vocabs = []
 	names = {}
-	K = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
-	newDoc = ''
-	n_index = 1
-	for seq_record in seqObj:
-		N = len(seq_record.seq)-K+1
-		kmerList = [];
-		names[seq_record.name] = n_index
-		for x in range(N):
-			kmer = str(seq_record.seq[x:x+K])
-			kmerList.append(kmer)
-			newDoc = ''.join(newDoc+kmer+' ')
-			if kmer in vocabDict:
-				vocabDict[kmer] += 1
-			else:
-				vocabDict[kmer] = 1
 
-		newDoc = ''.join(newDoc+'\n')
-		vocabs = list(set(vocabs+kmerList))
+	# compute lenght of k-mer by log(max(seq))
+	K = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
+	# N = sum(len(doc.seq)-K+1 for doc in seqObj)
+
+	wordId = 0
+	newDoc = ''
+	n_index = v_index = 1
+	for seq_record in seqObj:
+		seqLen = len(seq_record.seq)-K+1
+		names[seq_record.name] = n_index
+		for w in range(seqLen):
+			kmer = str(seq_record.seq[w:w+K])
+			if kmer not in vocabDict:
+				vocabDict[kmer] = wordId = v_index
+				v_index += 1
+			else:
+				wordId = vocabDict[kmer]
+			newDoc += str(wordId)+' '
+
+		newDoc += '\n'
 		n_index += 1
 
-	document.write(newDoc)
-	document.close()
+	fout = open(output,'w')
+	fout.write(newDoc)
+	fout.close()
 
-	vocabOutput.write('\n'.join(v for v in vocabs))
-	vocabOutput.write('\n')
-	vocabOutput.close()
+	fout = open(output+'Vocab', 'w')
+	fout.write('\n'.join(str(v) for k,v in vocabDict.items() ))
+	fout.write('\n')
+	fout.close()
 
-	# vocabCount = open(output+'VocabCount.txt', 'w')
-	# vocabCount.write('\n'.join("{}: {}".format(v, val) for (v, val) in vocabDict.items()) )
-	# vocabCount.write('\n')
-	# vocabCount.close()
+	# fout = open(output+'VocabCount', 'w')
+	# fout.write('\n'.join("{}: {}".format(v, val) for (v, val) in vocabDict.items()) )
+	# fout.write('\n')
+	# fout.close()
 	
 	return names
 
@@ -117,7 +120,7 @@ def fasta2Stan(input, output):
 ## Function print organisms names
 def printNames(output, names):
 	# Output names
-	fnames = open(output[0:output.rfind('/')+1]+'names.txt', 'w')
+	fnames = open(output[0:output.rfind('/')+1]+'names', 'w')
 	for n in names:
 		fnames.write(n+'\n');
 	fnames.close()
