@@ -14,8 +14,8 @@ args <- commandArgs(TRUE);
 ## Data
 docFile <- args[1];
 vocabFile <- paste(docFile, '', sep='Vocab')
-# docFile <- 'output/data';
-# vocabFile <- 'output/dataVocab.txt'
+# docFile <- 'output/LDArData';
+# vocabFile <- 'output/LDArDataVocab'
 
 vocabs = read.vocab(vocabFile);
 conn <- file(docFile,open="r")
@@ -28,9 +28,13 @@ docs = lexicalize(doclines, sep = " ", lower = FALSE,
 
 ## Parameters
 K <- as.numeric(args[3]);
-alpha <- as.numeric(args[4]);
-eta <- as.numeric(args[5]);
-maxIter <- as.numeric(args[6]);
+
+# select K using Rule of Thumb
+K <- round(log(length(vocabs)))
+alpha <- 50.0/K
+# alpha <- as.numeric(args[4]);
+eta <- as.numeric(args[4]);
+maxIter <- as.numeric(args[5]);
 output <- args[2]
 
 # K <- 10

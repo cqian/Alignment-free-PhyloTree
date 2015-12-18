@@ -34,8 +34,6 @@ numChains <- as.numeric(args[5])
 # run stan to fit the model
 fit <- stan(file=file, data=input, iter=maxIter, chains=numChains)
 
-# fit0 = stan(fit=fit, data=input, iter=100, chains=1, algorithm="NUTS")
-
 # extract result
 # theta <- extract(fit, 'theta', permuted = TRUE)
 post_mean_theta <- get_posterior_mean(fit,'theta')

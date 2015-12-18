@@ -12,3 +12,7 @@
 *.RHistory
 *.pdf
 output/*
+*.hpp
+*.csv
+LDA
+

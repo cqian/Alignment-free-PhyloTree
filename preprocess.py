@@ -12,23 +12,23 @@ from Bio import SeqIO
 
 ## Function that reads sequence file 
 #	and convert to LDA-c format
-def fasta2LDA(input, output):
+def fasta2LDA(input, output, maxSeq):
 	seqObj = list(SeqIO.parse(input, 'fasta'))
 	vocabDict = {}
 	names = {}
 
 	# compute lenght of k-mer by log(max(seq))
-	K = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
+	K = (int)(np.log(min(maxSeq, max(len(doc.seq) for doc in seqObj))))
 	# N = sum(len(doc.seq)-K+1 for doc in seqObj)
 
 	wordId = 0
 	newDoc = ''
 	n_index = v_index = 1
-	for seq_record in seqObj:
-		seqLen = len(seq_record.seq)-K+1
-		names[seq_record.name] = n_index
+	for doc in seqObj:
+		seqLen = min(maxSeq, len(doc.seq))-K+1
+		names[doc.name] = n_index
 		for w in range(seqLen):
-			kmer = str(seq_record.seq[w:w+K])
+			kmer = str(doc.seq[w:w+K])
 			if kmer not in vocabDict:
 				vocabDict[kmer] = wordId = v_index
 				v_index += 1
@@ -58,14 +58,14 @@ def fasta2LDA(input, output):
 
 ## Function that reads sequence file 
 #	and convert to Rstan format
-def fasta2Stan(input, output):
+def fasta2Stan(input, output, maxSeq):
 	seqObj = list(SeqIO.parse(input, 'fasta'))
 	vocabDict = {} 
 	names = {}
 
 	# compute lenght of k-mer by log(max(seq))
-	K = (int)(np.log(max(len(doc.seq) for doc in seqObj)))
-	N = sum(len(doc.seq)-K+1 for doc in seqObj)
+	K = (int)(np.log(min(maxSeq, max(len(doc.seq) for doc in seqObj))))
+	N = sum(min(maxSeq, len(doc.seq))-K+1 for doc in seqObj)
 
 	# build vocabulary, documents, words and names
 	words = [0]*N # word n 
@@ -75,9 +75,8 @@ def fasta2Stan(input, output):
 
 	# for each sequence (document)
 	for doc in seqObj:
-		seqLen = len(doc.seq)-K+1
+		seqLen = min(maxSeq, len(doc.seq))-K+1
 		names[doc.name] = n_index
-		
 		# for each word (kmer)	
 		for w in range(seqLen):
 			docID[w_index] = n_index
@@ -89,18 +88,7 @@ def fasta2Stan(input, output):
 			else:
 				words[w_index] = vocabDict[kmer]
 			w_index += 1
-
 		n_index += 1
-
-	## for debug
-	# print len(seqObj), n_index
-	# print N, w_index
-	# vocabDict = sorted(vocabDict.items(), key=lambda item: item[1])
-	# print L, N, w_index, n_index, v_index
-	# print vocabDict;
-	# print names
-	# print words
-	# print docID
 
 	# Output RStan data
 	V = len(vocabDict)
@@ -129,19 +117,21 @@ def printNames(output, names):
 ## Function that builds parameteres 
 #	for Stan Model
 def RStanModelParam(K, V, model, output, Alpha, Eta):
-	K = int(K)
-	rstan = open(output, 'a')
+	K = int(K) # number of topics
+	K = int(np.log(V)) # compute proper number of topics
+	Alpha = 50.0/K
 
+	rdata = open(output, 'a')
 	beta = np.random.dirichlet([Eta]*V).tolist();
 	beta = str(beta).replace('[','c(').replace(']',')')
 		
-	rstan.write("K <- " + str(K)+"\n")
-	rstan.write("beta <- " + beta + "\n")
+	rdata.write("K <- " + str(K)+"\n")
+	rdata.write("beta <- " + beta + "\n")
 	
 	if model == 'LDA':
 		alpha = np.random.dirichlet([Alpha]*K).tolist();
 		alpha = str(alpha).replace('[','c(').replace(']',')')
-		rstan.write("alpha <- " + alpha + "\n\n")
+		rdata.write("alpha <- " + alpha + "\n\n")
 
 	if model == 'CTM':
 		mu = np.random.uniform(0.0, 1.0, K).tolist()
@@ -157,11 +147,11 @@ def RStanModelParam(K, V, model, output, Alpha, Eta):
 			for j in range(i+1,K):
 				sigma[j*K+i] = sigma[i*K+j];
 		sigma = str(sigma).replace('[','c(').replace(']',')')
-		rstan.write("mu <- " + mu + "\n")
-		rstan.write("Sigma <- matrix(" + sigma + ", nrow=" + str(K) + 
+		rdata.write("mu <- " + mu + "\n")
+		rdata.write("Sigma <- matrix(" + sigma + ", nrow=" + str(K) + 
 						", ncol=" + str(K) + ")\n\n")
 
-	rstan.close()
+	rdata.close()
 
 
 def main():
@@ -175,12 +165,13 @@ def main():
 	output = sys.argv[5]
 	Alpha = float(sys.argv[6])
 	Eta = float(sys.argv[7])
+	maxSeq = int(sys.argv[8])
 
 	names = []
 	if method == 'LDAr':
-		names = fasta2LDA(input, output)
+		names = fasta2LDA(input, output, maxSeq)
 	else:
-		V, names = fasta2Stan(input, output)
+		V, names = fasta2Stan(input, output, maxSeq)
 		RStanModelParam(K, V, model, output, Alpha, Eta)
 
 	printNames(output, names)
