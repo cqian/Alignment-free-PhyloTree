@@ -16,3 +16,4 @@ output/*
 *.csv
 LDA
 fbCTM
+*.rtf
