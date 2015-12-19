@@ -6,33 +6,33 @@ NUMCHAINS = 1
 MAXSEQ = 10000000
 
 #{Stan, LDAr, cmdStan}
-METHOD = Stan
+METHOD = LDAr
 #{LDA, CTM, fbCTM}
-MODEL = fbCTM
+MODEL = LDA
 
 CURRDIR = $(shell pwd)
 # Geodermatophilaceae16s primatesMitoSeq-Single primatesMitoSeq SquamateMTCDs
 DATA = ~/Desktop/Data/Geodermatophilaceae16s.fasta
 PREFIX = output/
-PREOUTPUT = $(PREFIX)$(METHOD)Data
+NAME = $(PREFIX)16s
+PREOUTPUT = $(NAME)$(METHOD)Data
 MODELINPUT = $(PREOUTPUT)
-MODELOUTPUT = $(PREFIX)$(METHOD)Topic
-# TOPIC = $(PREFIX)$(METHOD)Topic_proportion
-MATRIX = $(PREFIX)$(METHOD)JSDMatrix
+MODELOUTPUT = $(NAME)$(METHOD)Topic
+MATRIX = $(NAME)$(METHOD)JSDMatrix
 
 
 preprocess:
-	python preprocess.py $(K) $(METHOD) $(MODEL) $(DATA) $(PREOUTPUT) $(ALPHA) $(ETA) $(MAXSEQ)
+	python preprocess.py $(K) $(METHOD) $(MODEL) $(DATA) $(PREOUTPUT) $(ALPHA) $(ETA) $(MAXSEQ) $(NAME)
 
 jsd:
-	python JSD.py $(MODELOUTPUT) $(MATRIX)
-	./ffptree -p $(MATRIX) > $(PREFIX)$(METHOD)NeighborTree
-	./ffptree -n $(MATRIX) > $(PREFIX)$(METHOD)UPGMATree
+	python JSD.py $(MODELOUTPUT) $(MATRIX) $(NAME)
+	./ffptree -p $(MATRIX) > $(NAME)$(METHOD)NeighborTree
+	./ffptree -n $(MATRIX) > $(NAME)$(METHOD)UPGMATree
 
 Stan:
-	# make preprocess
+	make preprocess
 	Rscript Stan.r $(MODEL) $(MODELINPUT) $(MODELOUTPUT) $(MAXITER) $(NUMCHAINS)
-	# make jsd
+	make jsd
 
 LDAr:
 	make preprocess
@@ -52,8 +52,8 @@ test:
 RESULT = $(PREFIX)cmdStanOutmf.csv
 STANMODEL = LDA.stan
 MAXWARM = $$(($(MAXITER)/2))
-ADAPTITER = 1
-SAMPLENUM = 5
+ADAPTITER = 100
+SAMPLENUM = 100
 
 compile:
 	~/Desktop/cmdstan-2.9.0/bin/stanc --name=$(MODEL) --o=$(PREFIX)$(MODEL).hpp $(STANMODEL)

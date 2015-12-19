@@ -23,7 +23,7 @@ def JSD(col, P, Q):
 	return 0.5 * np.fabs(PM+QM)
 
 
-def distance(input, output):
+def distance(input, output, fname):
 	with open(input, 'r') as f:
 		data = f.readlines()
 		f.close()
@@ -48,8 +48,8 @@ def distance(input, output):
 				print "not equal"
 
 	# write to file
-	fname = open(output[0:output.rfind('/')+1]+'names', 'r')
-	names = fname.readlines()
+	fin = open(fname, 'r')
+	names = fin.readlines()
 	maxLen = (int)(max(len(n) for n in names))
 	matrix = str(len(names))+"\n"
 	for i in range(rowsize):
@@ -67,8 +67,9 @@ def distance(input, output):
 def main():
 	input = sys.argv[1]
 	output = sys.argv[2]
+	fname = sys.argv[3]
 
- 	distance(input, output)
+ 	distance(input, output, fname)
 
 
 if __name__ == '__main__':

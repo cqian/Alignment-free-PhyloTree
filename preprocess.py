@@ -108,12 +108,13 @@ def fasta2Stan(input, output, maxSeq):
 
 
 ## Function print organisms names
-def printNames(output, names):
+def printNames(fname, names):
 	# Output names
-	fnames = open(output[0:output.rfind('/')+1]+'names', 'w')
+	print fname
+	fout = open(fname, 'w')
 	for n in names:
-		fnames.write(n+'\n');
-	fnames.close()
+		fout.write(n+'\n');
+	fout.close()
 
 
 ## Function that builds parameteres 
@@ -168,6 +169,7 @@ def main():
 	Alpha = float(sys.argv[6])
 	Eta = float(sys.argv[7])
 	maxSeq = int(sys.argv[8])
+	fname = sys.argv[9]
 
 	names = []
 	if method == 'LDAr':
@@ -176,7 +178,7 @@ def main():
 		V, names = fasta2Stan(input, output, maxSeq)
 		RStanModelParam(K, V, model, output, Alpha, Eta)
 
-	printNames(output, names)
+	printNames(fname, names)
 
 
 if __name__ == '__main__':
