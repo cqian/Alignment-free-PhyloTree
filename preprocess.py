@@ -18,7 +18,9 @@ def fasta2LDA(input, output, maxSeq):
 	names = {}
 
 	# compute lenght of k-mer by log(max(seq))
-	K = (int)(np.log(min(maxSeq, max(len(doc.seq) for doc in seqObj))))
+	# log base 4
+	K = (int)(np.log(min(maxSeq, max(len(doc.seq) for doc in seqObj)))/np.log(4))
+
 	# N = sum(len(doc.seq)-K+1 for doc in seqObj)
 
 	wordId = 0
@@ -64,7 +66,7 @@ def fasta2Stan(input, output, maxSeq):
 	names = {}
 
 	# compute lenght of k-mer by log(max(seq))
-	K = (int)(np.log(min(maxSeq, max(len(doc.seq) for doc in seqObj))))
+	K = (int)(np.log(min(maxSeq, max(len(doc.seq) for doc in seqObj)))/np.log(4))
 	N = sum(min(maxSeq, len(doc.seq))-K+1 for doc in seqObj)
 
 	# build vocabulary, documents, words and names
