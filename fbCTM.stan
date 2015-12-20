@@ -43,10 +43,12 @@ model {
 	mu ~ normal(0,5);       // vectorized, diffuse
 	Omega ~ lkj_corr(2.0);  // regularize to unit correlation
 	sigma ~ cauchy(0,5);  
+	
+	// topic distribution over vocabulary
 	for (k in 1:K)  
 		phi[k] ~ dirichlet(beta);
-	
-	// topic distribution for docs
+
+	// topic distribution over docs
 	for (m in 1:M)
 		eta[m] ~ multi_normal(mu,Sigma);
 	for (n in 1:N) {

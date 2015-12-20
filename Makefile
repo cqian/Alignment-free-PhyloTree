@@ -1,12 +1,13 @@
 K = 20
 ETA = 0.1
 ALPHA = $$((50 / $(K) ))
-MAXITER = 10
+MAXITER = 1000
 NUMCHAINS = 1
-MAXSEQ = 10000000
+MAXSEQ = 100000000
 
-#{Stan, LDAr, cmdStan}
-METHOD = LDAr
+#{Stan, LDAr, MeanField, FullRank, LBFGS}
+METHOD = LBFGS
+
 #{LDA, CTM, fbCTM}
 MODEL = LDA
 
@@ -15,7 +16,8 @@ CURRDIR = $(shell pwd)
 DATA = ~/Desktop/Data/Geodermatophilaceae16s.fasta
 PREFIX = output/
 NAME = $(PREFIX)16s
-PREOUTPUT = $(NAME)$(METHOD)Data
+
+PREOUTPUT = $(NAME)$(MODEL)$(METHOD)Data
 MODELINPUT = $(PREOUTPUT)
 MODELOUTPUT = $(NAME)$(METHOD)Topic
 MATRIX = $(NAME)$(METHOD)JSDMatrix
@@ -44,15 +46,15 @@ LDAr:
 clean:
 	rm *.*~ *~
 
-test:
-	python preprocess.py 10 LDAr LDA ~/Desktop/Data/SquamateMTCDs/seq.fasta output/LDArTest 0.1 1
+# test:
+# 	python preprocess.py 10 LDAr LDA ~/Desktop/Data/SquamateMTCDs/seq.fasta output/LDArTest 0.1 1
 
 
 # Compile Stan Model with CmdStan
-RESULT = $(PREFIX)cmdStanOutmf.csv
-STANMODEL = LDA.stan
+RESULT = $(NAME)$(MODEL)$(METHOD).csv
+STANMODEL = $(MODEL).stan
 MAXWARM = $$(($(MAXITER)/2))
-ADAPTITER = 100
+ADAPTITER = 200
 SAMPLENUM = 100
 
 compile:
@@ -70,9 +72,14 @@ optimize:
 	# default algo: (L)-BFGS
 	./$(MODEL) optimize algorithm=lbfgs iter=$(MAXITER) data file=$(MODELINPUT) output file=$(RESULT)
 
-advi:
+meanfield:
+	make preprocess
 	./$(MODEL) variational algorithm=meanfield iter=$(MAXITER) adapt iter=$(ADAPTITER) output_samples=$(SAMPLENUM) data file=$(MODELINPUT) output file=$(RESULT)
-	# ./$(MODEL) variational algorithm=fullrank iter=$(MAXITER) adapt iter=$(ADAPTITER) output_samples=$(SAMPLENUM) data file=$(OUTPUT) output file=$(RESULT) 
+	# ./$(MODEL) variational algorithm=meanfield iter=$(MAXITER) adapt iter=$(ADAPTITER) eval_elbo=200 output_samples=$(SAMPLENUM) data file=$(MODELINPUT) output file=$(RESULT)
+
+fullrank:
+	make preprocess
+	./$(MODEL) variational algorithm=fullrank iter=$(MAXITER) adapt iter=$(ADAPTITER) output_samples=$(SAMPLENUM) data file=$(MODELINPUT) output file=$(RESULT) 
 
 summary:
 	~/Desktop/cmdstan-2.9.0/bin/stansummary $(RESULT)
