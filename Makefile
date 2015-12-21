@@ -1,12 +1,12 @@
 K = 20
 ETA = 0.1
 ALPHA = $$((50 / $(K) ))
-MAXITER = 1000
+MAXITER = 10000
 NUMCHAINS = 1
 MAXSEQ = 100000000
 
 #{Stan, LDAr, MeanField, FullRank, LBFGS}
-METHOD = LBFGS
+METHOD = LDAr
 
 #{LDA, CTM, fbCTM}
 MODEL = LDA
@@ -46,8 +46,8 @@ LDAr:
 clean:
 	rm *.*~ *~
 
-# test:
-# 	python preprocess.py 10 LDAr LDA ~/Desktop/Data/SquamateMTCDs/seq.fasta output/LDArTest 0.1 1
+temp:
+	# python preprocess.py 10 LDAr LDA ~/Desktop/Data/SquamateMTCDs/seq.fasta output/LDArTest 0.1 1
 
 
 # Compile Stan Model with CmdStan
