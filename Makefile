@@ -13,7 +13,7 @@ MODEL = LDA
 
 CURRDIR = $(shell pwd)
 # Geodermatophilaceae16s primatesMitoSeq-Single primatesMitoSeq SquamateMTCDs
-DATA = ~/Desktop/Data/Geodermatophilaceae16s.fasta
+DATA = ../data/Geodermatophilaceae16s.fasta
 PREFIX = output/
 NAME = $(PREFIX)16s
 
